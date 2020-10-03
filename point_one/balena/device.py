@@ -45,13 +45,17 @@ def get_device_uuid(name_or_uuid, is_name=None, return_name=False, balena=None, 
     if uuid is None and is_name is not False:
         __logger.debug("Trying device name query for '%s'." % name_or_uuid)
 
-        # Not clear why this returns an array. It does not support partial name matching and only returns either 0 or 1
-        # result. We'll check for multiples for future proofing anyway.
-        devices_by_name = balena.models.device.get_by_name(name_or_uuid)
-        if len(devices_by_name) == 1:
-            device = devices_by_name[0]
+        # Unfortunately, Balena's Python SDK does not have an efficient way to do a partial name match, but we can make
+        # a custom request manually. See https://forums.balena.io/t/python-sdk-partial-device-uuid-query/190973/33.
+        request = BaseRequest()
+        devices_by_name = request.request('device', 'GET',
+                                          raw_query="$filter=startswith(device_name, '%s')" % name_or_uuid,
+                                          endpoint=balena.settings.get('pine_endpoint'))['d']
+        for device in devices_by_name:
             device['name'] = device['device_name']
 
+        if len(devices_by_name) == 1:
+            device = devices_by_name[0]
             if is_name:
                 uuid = device['uuid']
                 name = device['name']
@@ -70,7 +74,8 @@ def get_device_uuid(name_or_uuid, is_name=None, return_name=False, balena=None, 
         # Unfortunately, Balena's Python SDK does not have an efficient way to do a partial UUID match, but we can make
         # a custom request manually. See https://forums.balena.io/t/python-sdk-partial-device-uuid-query/190973/33.
         request = BaseRequest()
-        devices_by_uuid = request.request('device', 'GET', raw_query="$filter=startswith(uuid, '%s')" % name_or_uuid,
+        devices_by_uuid = request.request('device', 'GET',
+                                          raw_query="$filter=startswith(uuid, '%s')" % name_or_uuid,
                                           endpoint=balena.settings.get('pine_endpoint'))['d']
         for device in devices_by_uuid:
             device['name'] = device['device_name']
