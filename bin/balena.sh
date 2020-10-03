@@ -19,4 +19,4 @@ get_parent_dir() {
 SCRIPT_DIR=$(get_parent_dir)
 REPO_DIR="${SCRIPT_DIR}/.."
 
-python "${REPO_DIR}/point_one/balena/cli.py" $*
+python3 "${REPO_DIR}/point_one/balena/cli.py" $*
