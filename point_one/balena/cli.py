@@ -140,7 +140,7 @@ program, you can use the -- separator:
             is_name = None
 
         try:
-            uuid = get_device_uuid(options.args[id_index], is_name=is_name)
+            uuid = get_device_uuid(options.args[id_index], is_name=is_name, check_exact_match=True)
             if not options.quiet:
                 # Note: Explicitly calling print(), not __logger.info(), so there's no logger format string stuff. That
                 # way the console output is always consistent and easy to parse programmatically if needed.

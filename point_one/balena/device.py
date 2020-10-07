@@ -21,7 +21,8 @@ from .auth import authenticate
 __logger = logging.getLogger("point_one.balena.device")
 
 
-def get_device_uuid(name_or_uuid, is_name=None, return_name=False, balena=None, auth_token=None):
+def get_device_uuid(name_or_uuid, is_name=None, return_name=False, balena=None, auth_token=None,
+                    check_exact_match=False):
     if balena is None:
         balena = authenticate(auth_token)
 
@@ -65,6 +66,14 @@ def get_device_uuid(name_or_uuid, is_name=None, return_name=False, balena=None, 
         elif len(devices_by_name) > 1:
             __logger.warning("Found multiple devices matching partial name string:\n    %s" %
                              "\n    ".join(["%(name)s (%(uuid)s)" % device for device in devices_by_name]))
+
+            # If any of the devices is an exact match to the name, assume that's the correct match.
+            if check_exact_match:
+                for device in devices_by_name:
+                    if device['name'] == name_or_uuid:
+                        uuid = device['uuid']
+                        name = device['name']
+                        __logger.warning("Using exact match: %s (%s)." % (name, uuid))
 
     # If it's UUID-like and not explicitly a device name, see if it matches any known device.
     devices_by_uuid = []
