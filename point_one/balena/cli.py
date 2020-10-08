@@ -44,6 +44,47 @@ def find_balena_cli():
     raise RuntimeError('Unable to find Balena CLI on the system path.')
 
 
+def _find_device_name(args):
+    # Function to find the first argument that does not start with - or --.
+    def find_first_non_dash(arg_list):
+        for i, arg in enumerate(arg_list):
+            if not arg.startswith('-'):
+                return i
+        raise ValueError('Device name/UUID not specified.')
+
+    # Get the name of the CLI command.
+    command = args[0]
+    args = args[1:]
+
+    # If this is a device-targeting command, try to find the name/UUID argument.
+    id_index = None
+    if command == 'device':
+        __logger.debug("Locating name/UUID for '%s' command." % command)
+
+        # For `balena device`, the first argument can be either a device name or a sub-command.
+        first_arg_index = find_first_non_dash(args)
+        sub_commands = ['identify', 'move', 'reboot', 'rename', 'rm', 'restart', 'shutdown', 'os-update', 'public-url']
+        if args[first_arg_index] in sub_commands:
+            id_index = find_first_non_dash(args[first_arg_index + 1:]) + (first_arg_index + 1)
+        else:
+            id_index = first_arg_index
+    elif command in ('ssh', 'tunnel'):
+        __logger.debug("Locating name/UUID for '%s' command." % command)
+        id_index = find_first_non_dash(args)
+    else:
+        # Search for --device VALUE
+        for i, arg in enumerate(args):
+            if arg == '--device':
+                if i < len(args) - 1:
+                    id_index = i + 1
+                    break
+
+    if id_index is not None:
+        return id_index + 1
+    else:
+        return None
+
+
 if __name__ == "__main__":
     parser = ArgumentParser(usage='%(prog)s [OPTIONS]... [BALENA CLI OPTIONS]...',
                             description="""\
@@ -92,44 +133,9 @@ program, you can use the -- separator:
         parser.print_help()
         sys.exit(0)
 
-    # Get the name of the CLI command.
-    command = options.args[0]
-
-    # If this is a device-targeting command, try to find the name/UUID argument.
-    id_index = None
-    if command == 'device':
-        __logger.debug("Locating name/UUID for '%s' command." % command)
-
-        if len(options.args) >= 2:
-            next_arg = options.args[1]
-        else:
-            raise ValueError('Device name/UUID not specified.')
-
-        sub_commands = ['identify', 'move', 'reboot', 'rename', 'rm', 'restart', 'shutdown', 'os-update', 'public-url']
-        if next_arg in sub_commands:
-            if len(options.args) >= 3:
-                id_index = 2
-            else:
-                raise ValueError('Device name/UUID not specified.')
-        else:
-            id_index = 1
-    elif command in ('ssh', 'tunnel'):
-        __logger.debug("Locating name/UUID for '%s' command." % command)
-        if len(options.args) >= 2:
-            id_index = 1
-        else:
-            raise ValueError('Device name/UUID not specified.')
-    else:
-        # Search for --device VALUE
-        for i, arg in enumerate(options.args):
-            if i == 0:
-                continue
-            elif arg == '--device':
-                if i < len(options.args) - 1:
-                    id_index = len(options.args) - 1
-                    break
-
-    # If an ID was found, try to convert it to UUID (if necessary).
+    # If this is a device-targeting command, try to find the name/UUID argument. If an ID was found, try to convert it
+    # to UUID (if necessary).
+    id_index = _find_device_name(options.args)
     if id_index is not None:
         __logger.debug("Converting '%s' to device UUID." % options.args[id_index])
         if options.name:
