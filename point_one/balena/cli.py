@@ -68,7 +68,7 @@ def _find_device_name(args):
             id_index = find_first_non_dash(args[first_arg_index + 1:]) + (first_arg_index + 1)
         else:
             id_index = first_arg_index
-    elif command in ('ssh', 'tunnel'):
+    elif command in ('ssh', 'tunnel', 'logs'):
         __logger.debug("Locating name/UUID for '%s' command." % command)
         id_index = find_first_non_dash(args)
     else:
