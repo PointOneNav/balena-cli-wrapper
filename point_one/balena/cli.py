@@ -104,6 +104,8 @@ program, you can use the -- separator:
                        help="If specified, treat the string as a name and do not attempt a UUID lookup.")
     group.add_argument('--uuid', action='store_true',
                        help="If specified, treat the string as a UUID and do not attempt a name lookup.")
+    group.add_argument('-n', '--no-query', action='store_true',
+                       help="If specified, use the device identifier verbatim and do not perform a name/UUID query.")
 
     group.add_argument('--quiet', action='store_true',
                        help="Do not print the UUID of the specified device on success.")
@@ -136,7 +138,7 @@ program, you can use the -- separator:
     # If this is a device-targeting command, try to find the name/UUID argument. If an ID was found, try to convert it
     # to UUID (if necessary).
     id_index = _find_device_name(options.args)
-    if id_index is not None:
+    if id_index is not None and not options.no_query:
         __logger.debug("Converting '%s' to device UUID." % options.args[id_index])
         if options.name:
             is_name = True
