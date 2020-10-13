@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import ipaddress
 import logging
 import os
 import subprocess
@@ -44,7 +45,7 @@ def find_balena_cli():
     raise RuntimeError('Unable to find Balena CLI on the system path.')
 
 
-def _find_device_name(args):
+def _find_device_name(args, return_command=False):
     # Function to find the first argument that does not start with - or --.
     def find_first_non_dash(arg_list):
         for i, arg in enumerate(arg_list):
@@ -80,9 +81,12 @@ def _find_device_name(args):
                     break
 
     if id_index is not None:
-        return id_index + 1
+        id_index += 1
+
+    if return_command:
+        return id_index, command
     else:
-        return None
+        return id_index
 
 
 if __name__ == "__main__":
@@ -137,26 +141,35 @@ program, you can use the -- separator:
 
     # If this is a device-targeting command, try to find the name/UUID argument. If an ID was found, try to convert it
     # to UUID (if necessary).
-    id_index = _find_device_name(options.args)
+    id_index, command = _find_device_name(options.args, return_command=True)
     if id_index is not None and not options.no_query:
-        __logger.debug("Converting '%s' to device UUID." % options.args[id_index])
-        if options.name:
-            is_name = True
-        elif options.uuid:
-            is_name = False
-        else:
-            is_name = None
-
+        # If this is an ssh command, check if the user specified a local IP or a .local domain name. If so, pass it
+        # directly to Balena.
         try:
-            uuid = get_device_uuid(options.args[id_index], is_name=is_name, check_exact_match=True)
-            if not options.quiet:
-                # Note: Explicitly calling print(), not __logger.info(), so there's no logger format string stuff. That
-                # way the console output is always consistent and easy to parse programmatically if needed.
-                print('Found device: %s' % uuid)
-            options.args[id_index] = uuid
-        except Exception as e:
-            __logger.error("Error: %s" % str(e))
-            sys.exit(1)
+            if options.args[id_index].endswith('.local'):
+                pass
+            else:
+                ipaddress.ip_address(options.args[id_index])
+        # Otherwise, perform a device name/UUID lookup.
+        except Exception:
+            __logger.debug("Converting '%s' to device UUID." % options.args[id_index])
+            if options.name:
+                is_name = True
+            elif options.uuid:
+                is_name = False
+            else:
+                is_name = None
+
+            try:
+                uuid = get_device_uuid(options.args[id_index], is_name=is_name, check_exact_match=True)
+                if not options.quiet:
+                    # Note: Explicitly calling print(), not __logger.info(), so there's no logger format string stuff.
+                    # That way the console output is always consistent and easy to parse programmatically if needed.
+                    print('Found device: %s' % uuid)
+                options.args[id_index] = uuid
+            except Exception as e:
+                __logger.error("Error: %s" % str(e))
+                sys.exit(1)
 
     # Finally, find the path to the actual CLI and execute the command. Using find_balena_cli() allows us to install
     # this wrapper as either cli.py to be called directly on the PATH, a `balena` wrapper script before the actual CLI
