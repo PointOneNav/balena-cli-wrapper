@@ -64,7 +64,9 @@ def _find_device_name(args, return_command=False):
 
         # For `balena device`, the first argument can be either a device name or a sub-command.
         first_arg_index = find_first_non_dash(args)
-        sub_commands = ['identify', 'move', 'reboot', 'rename', 'rm', 'restart', 'shutdown', 'os-update', 'public-url']
+        sub_commands = ['deactivate', 'identify', 'local-mode', 'logs', 'move', 'os-update', 'pin', 'public-url',
+                        'purge', 'reboot', 'rename', 'restart', 'rm', 'shutdown', 'ssh', 'start-service',
+                        'stop-service', 'track-fleet', 'tunnel']
         if args[first_arg_index] in sub_commands:
             id_index = find_first_non_dash(args[first_arg_index + 1:]) + (first_arg_index + 1)
         else:
