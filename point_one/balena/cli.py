@@ -78,7 +78,9 @@ def _find_device_name(args, return_command=False):
             id_index = first_arg_index
     # balena ssh/tunnel/logs are all legacy commands, and have been removed from recent versions of the Balena CLI in
     # favor of balena device ssh, etc. We still support them for convenience.
-    elif command in ('ssh', 'tunnel', 'logs'):
+    #
+    # balena uuid is a custom command for this script, used to print out the device UUID and exit.
+    elif command in ('uuid', 'ssh', 'tunnel', 'logs'):
         __logger.debug("Locating name/UUID for '%s' command." % command)
         id_index = find_first_non_dash(args)
     else:
@@ -191,8 +193,11 @@ program, you can use the -- separator:
     # on the PATH, or a Bash alias for `balena`.
     cli_path = find_balena_cli()
     if command == 'which':
-        # Print the path directly to stdout for which, do not use logger and append a prefix.
+        # Print the result directly to stdout, do not use logger and append a logging prefix and formatting.
         print(cli_path)
+    elif command == 'uuid':
+        # UUID printed above.
+        pass
     else:
         options.args.insert(0, cli_path)
         __logger.debug("Executing command: %s" % ' '.join(options.args))
