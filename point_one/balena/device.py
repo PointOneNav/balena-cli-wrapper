@@ -31,7 +31,7 @@ def get_device_uuid(name_or_uuid, is_name=None, return_name=False, balena=None, 
     if balena is None:
         balena = authenticate(auth_token)
 
-    #If this might be a 128 - bit UUID, first see if we can find a device with it.
+    # If this might be a 128 - bit UUID, first see if we can find a device with it.
     name = None
     uuid = None
     uuid_like = re.match(r"^[a-fA-F0-9]+$", name_or_uuid)
@@ -46,15 +46,30 @@ def get_device_uuid(name_or_uuid, is_name=None, return_name=False, balena=None, 
         except DeviceNotFound:
             pass
 
-    # List all devices, needed for partial name/UUID searches below. This is inefficient if there are a lot of devices,
-    # but is needed in more recent versions of the Balena SDK. See below for the explanation.
-    if not have_base_request:
+    # See if this is an exact match for a device name.
+    if uuid is None and is_name is not False:
+        __logger.debug("Trying device name query for '%s'." % name_or_uuid)
+
+        try:
+            devices = balena.models.device.get_by_name(name_or_uuid)
+            if len(devices) == 1:
+                device = devices[0]
+                uuid = device['uuid']
+                name = device['device_name']
+                __logger.debug("Found device %s (%s) by absolute UUID." % (name, uuid))
+        except DeviceNotFound:
+            pass
+
+    # If we haven't found the device yet, list all devices, needed for partial name/UUID searches below. This is
+    # inefficient if there are a lot of devices, but is needed in more recent versions of the Balena SDK. See below for
+    # the explanation.
+    if uuid is None and not have_base_request:
         all_devices = balena.models.device.get_all()
 
     # If this might be a device name, look now.
     devices_by_name = []
     if uuid is None and is_name is not False:
-        __logger.debug("Trying device name query for '%s'." % name_or_uuid)
+        __logger.debug("Trying partial device name query for '%s'." % name_or_uuid)
 
         # Balena's Python SDK does not have an efficient way to do a partial name match. Previously, the SDK allowed you
         # to make a custom request and filter the data with a SQL-like query. This was suggested in
