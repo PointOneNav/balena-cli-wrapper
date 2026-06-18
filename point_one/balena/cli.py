@@ -177,8 +177,12 @@ program, you can use the -- separator:
     # this wrapper as either cli.py to be called directly on the PATH, a `balena` wrapper script before the actual CLI
     # on the PATH, or a Bash alias for `balena`.
     cli_path = find_balena_cli()
-    options.args.insert(0, cli_path)
-    __logger.debug("Executing command: %s" % ' '.join(options.args))
-    cli = subprocess.Popen(options.args, stdin=sys.stdin.fileno(), stdout=sys.stdout.fileno(),
-                           stderr=sys.stderr.fileno())
-    sys.exit(cli.wait())
+    if command == 'which':
+        # Print the path directly to stdout for which, do not use logger and append a prefix.
+        print(cli_path)
+    else:
+        options.args.insert(0, cli_path)
+        __logger.debug("Executing command: %s" % ' '.join(options.args))
+        cli = subprocess.Popen(options.args, stdin=sys.stdin.fileno(), stdout=sys.stdout.fileno(),
+                               stderr=sys.stderr.fileno())
+        sys.exit(cli.wait())
