@@ -101,6 +101,7 @@ def get_device_uuid(name_or_uuid, is_name=None, return_name=False, balena=None, 
                         uuid = device['uuid']
                         name = device['device_name']
                         __logger.warning("Using exact match: %s (%s)." % (name, uuid))
+                        break
 
     # If it's UUID-like and not explicitly a device name, see if it matches any known device.
     devices_by_uuid = []
