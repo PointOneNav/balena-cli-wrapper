@@ -169,6 +169,10 @@ program, you can use the -- separator:
     # If this is a device-targeting command, try to find the name/UUID argument. If an ID was found, try to convert it
     # to UUID (if necessary).
     id_index, command = _find_device_name(options.args, return_command=True)
+
+    if command in ('uuid', 'which'):
+        options.quiet = True
+
     if id_index is not None and not options.no_query:
         # If this is an ssh command, check if the user specified a local IP or a .local domain name. If so, pass it
         # directly to Balena.
@@ -206,8 +210,8 @@ program, you can use the -- separator:
         # Print the result directly to stdout, do not use logger and append a logging prefix and formatting.
         print(cli_path)
     elif command == 'uuid':
-        # UUID printed above.
-        pass
+        # Print the result directly to stdout, do not use logger and append a logging prefix and formatting.
+        print(uuid)
     else:
         options.args.insert(0, cli_path)
         __logger.debug("Executing command: %s" % ' '.join(options.args))
