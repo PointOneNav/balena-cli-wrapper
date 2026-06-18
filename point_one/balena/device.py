@@ -92,7 +92,7 @@ def get_device_uuid(name_or_uuid, is_name=None, return_name=False, balena=None, 
                 __logger.debug("Found candidate device %(device_name)s (%(uuid)s) by name." % device)
         elif len(devices_by_name) > 1:
             __logger.warning("Found multiple devices matching partial name string:\n    %s" %
-                             "\n    ".join(["%(name)s (%(uuid)s)" % device for device in devices_by_name]))
+                             "\n    ".join(["%(device_name)s (%(uuid)s)" % device for device in devices_by_name]))
 
             # If any of the devices is an exact match to the name, assume that's the correct match.
             if check_exact_match:
