@@ -45,6 +45,11 @@ def find_balena_cli():
     raise RuntimeError('Unable to find Balena CLI on the system path.')
 
 
+def _convert_legacy_commands(args):
+    if args[0] in ('ssh', 'tunnel', 'logs'):
+        args.insert(0, 'device')
+
+
 def _find_device_name(args, return_command=False):
     # Function to find the first argument that does not start with - or --.
     def find_first_non_dash(arg_list):
@@ -71,6 +76,8 @@ def _find_device_name(args, return_command=False):
             id_index = find_first_non_dash(args[first_arg_index + 1:]) + (first_arg_index + 1)
         else:
             id_index = first_arg_index
+    # balena ssh/tunnel/logs are all legacy commands, and have been removed from recent versions of the Balena CLI in
+    # favor of balena device ssh, etc. We still support them for convenience.
     elif command in ('ssh', 'tunnel', 'logs'):
         __logger.debug("Locating name/UUID for '%s' command." % command)
         id_index = find_first_non_dash(args)
@@ -140,6 +147,12 @@ program, you can use the -- separator:
     if len(options.args) == 0:
         parser.print_help()
         sys.exit(0)
+
+    # For convenience, convert legacy Balena CLI commands that are no longer supported:
+    #   balena logs  -->  balena device logs
+    #   balena ssh  -->  balena device ssh
+    #   balena tunnel  -->  balena device tunnel
+    _convert_legacy_commands(options.args)
 
     # If this is a device-targeting command, try to find the name/UUID argument. If an ID was found, try to convert it
     # to UUID (if necessary).
