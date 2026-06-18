@@ -107,11 +107,21 @@ Wrap Balena CLI commands and add support for device names in any device-targeted
 commands (balena device, balena ssh, etc.), in addition to UUIDs. All non-device
 commands will be passed through as is.
 
+For example:
+  balena device logs my-device
+    is translated to
+  balena device logs fab8e4da78d928212cbf9ff694eaa1e2
+
+This tool also adds the following non-standard commands for convenience:
+  balena which      # Print the location of the Balena CLI used by this
+                    # application
+  balena uuid NAME  # Print the UUID for the specified device name and exit
+
 To pass arguments directly to the Balena CLI that overlap with arguments to this
 program, you can use the -- separator:
-    $ balena --help
+  balena --help
     vs
-    $ balena -- --help
+  balena -- --help
 """)
 
     group = parser.add_mutually_exclusive_group()
